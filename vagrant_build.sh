@@ -17,6 +17,9 @@ else
   echo "Please run $0 on Vagrant directory"
 fi
 
+echo "update submodules: translations"
+(cd libreoffice;git submodule init;git submodule update translations)
+
 echo "Start building with vagrant"
 vagrant up
 
