@@ -17,9 +17,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     override.vm.box     = "trusty"
     override.vm.box_url = "https://vagrant-kvm-boxes-si.s3.amazonaws.com/trusty64-kvm-20140418.box"
     kvm.memory_size = "4gb"
+    # 9p cause git problem.
+    override.vm.synced_folder ".", "/vagrant", type: "nfs"
   end
 
-  config.vm.synced_folder "/tmp", "/var/tmp/lo", type: "nfs"
+  # If you want to add more disk space for compilation.
+  # Please check and update environment variable TMPDIR also.
+  #
+  #config.vm.synced_folder "/var/tmp/libreoffice", "/var/tmp/libreoffice"
 
   if Vagrant.has_plugin?("vagrant-cachier")
     config.cache.auto_detect = true
@@ -36,9 +41,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.provision :shell, privileged: false, inline: <<-SH2
     set -x
-    export TMPDIR=/var/tmp/lo
     #
-    # configure build options
+    #export TMPDIR=/var/tmp/libreoffice
     #
     LOGIT_REPO=git://gerrit.libreoffice.org/core
     BUILD_GEN="--without-java --without-help --without-myspell-dicts"
@@ -46,8 +50,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     BUILD_LANG="--with-lang=ALL"
     BUILD_SRC="--with-referenced-git=/vagrant/libreoffice --with-external-tar=/vagrant/libreoffice/src"
     BUILD_BRANCH="master"
-    #
-    # start build
     #
     cd /home/vagrant
     git clone --reference /vagrant/libreoffice --branch $BUILD_BRANCH $LOGIT_REPO libreoffice
