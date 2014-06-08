@@ -25,7 +25,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.cache.auto_detect = true
   end
 
-  config.vm.provision :shell, privileged: false, inline: <<-SH
+  config.vm.provision :shell, inline: <<-SH1
+    set -x
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get -y install git autoconf automake make
+    apt-get -y install libgstreamer0.10-dev libgstreamer-plugins-base0.10-dev
+    apt-get -y build-dep libreoffice
+  SH1
+
+  config.vm.provision :shell, privileged: false, inline: <<-SH2
     set -x
     export TMPDIR=/var/tmp/lo
     #
@@ -38,14 +47,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     BUILD_SRC="--with-referenced-git=/vagrant/libreoffice --with-external-tar=/vagrant/libreoffice/src"
     BUILD_BRANCH="master"
     #
-    # install dependencies
-    #
-    export DEBIAN_FRONTEND=noninteractive
-    apt-get update
-    apt-get -y install git autoconf automake make
-    apt-get -y install libgstreamer0.10-dev libgstreamer-plugins-base0.10-dev
-    apt-get -y build-dep libreoffice
-    #
     # start build
     #
     cd /home/vagrant
@@ -53,6 +54,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     cd libreoffice
     ./autogen.sh $BUILD_GEN $BUILD_DEBUG $BUILD_LANG $BUILD_SRC
     make
-  SH
+  SH2
 
 end
