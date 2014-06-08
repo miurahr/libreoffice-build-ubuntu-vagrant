@@ -16,6 +16,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     kvm.gui = true
     override.vm.box     = "trusty"
     override.vm.box_url = "https://vagrant-kvm-boxes-si.s3.amazonaws.com/trusty64-kvm-20140418.box"
+    kvm.memory_size = "4gb"
   end
 
   config.vm.synced_folder "/tmp", "/var/tmp/lo", type: "nfs"
@@ -24,17 +25,33 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.cache.auto_detect = true
   end
 
-  config.vm.provision :shell, inline: <<-SH
+  config.vm.provision :shell, privileged: false, inline: <<-SH
     set -x
-    export DEBIAN_FRONTEND=noninteractive
     export TMPDIR=/var/tmp/lo
+    #
+    # configure build options
+    #
+    LOGIT_REPO=git://gerrit.libreoffice.org/core
+    BUILD_GEN="--without-java --without-help --without-myspell-dicts"
+    BUILD_DEBUG="--enable-dbgutil"
+    BUILD_LANG="--with-lang=ALL"
+    BUILD_SRC="--with-referenced-git=/vagrant/libreoffice --with-external-tar=/vagrant/libreoffice/src"
+    BUILD_BRANCH="master"
+    #
+    # install dependencies
+    #
+    export DEBIAN_FRONTEND=noninteractive
     apt-get update
     apt-get -y install git autoconf automake make
     apt-get -y install libgstreamer0.10-dev libgstreamer-plugins-base0.10-dev
     apt-get -y build-dep libreoffice
-    git clone --depth 1 git://gerrit.libreoffice.org/core libreoffice
+    #
+    # start build
+    #
+    cd /home/vagrant
+    git clone --reference /vagrant/libreoffice --branch $BUILD_BRANCH $LOGIT_REPO libreoffice
     cd libreoffice
-    ./autogen.sh --enable-dbgutil --without-java --without-help --without-myspell-dicts --with-lang=ALL
+    ./autogen.sh $BUILD_GEN $BUILD_DEBUG $BUILD_LANG $BUILD_SRC
     make
   SH
 
